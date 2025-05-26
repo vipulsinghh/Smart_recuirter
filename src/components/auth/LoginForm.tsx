@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,20 +51,19 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      await login(values.email, values.role as UserRole);
+      // The second parameter to login is a dummy because the function signature was changed to accept the actual password as the last argument.
+      // This is a temporary measure. The parameter named `password_DO_NOT_USE` should be removed in the AuthContext.
+      await login(values.email, "dummy_password_value", values.role as UserRole, values.password);
       toast({
-        title: "Login Successful",
-        description: `Welcome back, ${values.role}!`,
+        title: "Login Attempted",
+        description: `Checking credentials for ${values.role}...`,
       });
-      // Redirect is handled by AuthContext
+      // Redirect is handled by AuthContext/onAuthStateChanged
     } catch (error) {
-      toast({
-        title: "Login Failed",
-        description: (error as Error).message || "An unexpected error occurred.",
-        variant: "destructive",
-      });
+      // Error toast is handled in AuthContext, but we stop loading here
       setIsSubmitting(false);
     }
+    // setIsSubmitting(false) will be handled by onAuthStateChanged in AuthContext or error catch
   }
 
   return (

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,10 +23,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAuth } from "@/hooks/useAuth"; // Assuming signup will be added to useAuth
+import { useAuth } from "@/hooks/useAuth";
 import type { UserRole } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -41,10 +41,8 @@ const formSchema = z.object({
 });
 
 export function SignupForm() {
-  // const { signup } = useAuth(); // Assuming signup function exists or will be mocked
-  const { login } = useAuth(); // Using login as a mock for signup for now
+  const { signup } = useAuth();
   const { toast } = useToast();
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -60,24 +58,20 @@ export function SignupForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      // Mock signup by calling login, then redirecting appropriately
-      // In a real app, you'd call a dedicated signup function.
-      // await signup(values.name, values.email, values.role as UserRole);
-      await login(values.email, values.role as UserRole); // MOCK: Using login
+      // The third parameter to signup is a dummy because the function signature was changed to accept the actual password as the last argument.
+      // This is a temporary measure. The parameter named `password_DO_NOT_USE` should be removed in the AuthContext.
+      await signup(values.name, values.email, "dummy_password_value", values.role as UserRole, values.password);
       
       toast({
-        title: "Signup Successful",
-        description: `Welcome, ${values.name}! Your account as a ${values.role} has been created.`,
+        title: "Signup Attempted",
+        description: `Creating account for ${values.name} as a ${values.role}...`,
       });
-      // Redirect is handled by AuthContext after login
+      // Redirect is handled by AuthContext/onAuthStateChanged
     } catch (error) {
-      toast({
-        title: "Signup Failed",
-        description: (error as Error).message || "An unexpected error occurred.",
-        variant: "destructive",
-      });
+      // Error toast is handled in AuthContext, but we stop loading here
       setIsSubmitting(false);
     }
+    // setIsSubmitting(false) will be handled by onAuthStateChanged in AuthContext or error catch
   }
 
   return (
