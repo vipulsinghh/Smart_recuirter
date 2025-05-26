@@ -32,7 +32,7 @@ export default function LandingPage() {
         />
         <div className="container relative z-10 text-center">
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-            Welcome to <span className="text-accent">PlaceOn</span>
+            Welcome to <span className="text-accent">SmartRecruiter</span>
           </h1>
           <p className="mt-6 max-w-2xl mx-auto text-lg text-primary-foreground/80 md:text-xl">
             Streamlining campus placements. Connecting students, companies, and colleges seamlessly for a brighter future.
@@ -52,7 +52,7 @@ export default function LandingPage() {
       <section id="features" className="py-16 md:py-24 bg-background">
         <div className="container">
           <h2 className="text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-            Why Choose PlaceOn?
+            Why Choose SmartRecruiter?
           </h2>
           <p className="mt-4 text-center text-lg text-muted-foreground">
             A comprehensive platform designed for every stakeholder in the placement process.
@@ -112,12 +112,12 @@ export default function LandingPage() {
               PlaceOn provides intuitive dashboards and tools to help you navigate the placement journey effectively.
             </p>
             <Button asChild className="mt-6 bg-accent text-accent-foreground hover:bg-accent/90">
-              <Link href="/signup">Join PlaceOn Today</Link>
+              <Link href="/signup">Join SmartRecruiter Today</Link>
             </Button>
           </div>
           <div>
             <Image 
-              src="https://placehold.co/600x400.png" 
+              src="https://measiim.edu.in/myweb/uploads/2022/05/placement.jpg" 
               alt="Dashboard Preview" 
               width={600} 
               height={400} 
@@ -133,7 +133,7 @@ export default function LandingPage() {
         <div className="container">
           <Logo className="justify-center mb-4"/>
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} PlaceOn. All rights reserved.
+            &copy; {new Date().getFullYear()} SmartRecruiter. All rights reserved.
           </p>
         </div>
       </footer>

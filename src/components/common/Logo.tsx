@@ -12,7 +12,7 @@ export function Logo({ collapsed = false, className }: LogoProps) {
       <PlaceOnIcon className="h-7 w-7 text-primary" />
       {!collapsed && (
         <span className="text-xl font-semibold text-foreground">
-          PlaceOn
+          SmartRecruiter
         </span>
       )}
     </Link>
