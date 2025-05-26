@@ -1,6 +1,7 @@
 
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 // import { getAnalytics } from "firebase/analytics"; // Analytics can be added if needed
 
@@ -24,7 +25,26 @@ if (!getApps().length) {
   app = getApp();
 }
 
+const db = getFirestore(app);
 const auth = getAuth(app);
 // const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null; // Initialize analytics only on client
 
-export { app, auth };
+async function saveUserData(userId: string, name: string, email: string, role: string, skills?: string, tenthMarks?: number, twelfthMarks?: number, cgpa?: number, additionalCertificates?: string) {
+  try {
+    await setDoc(doc(db, "users", userId), {
+      name,
+      email,
+      role,
+      skills: skills || "",
+      tenthMarks: tenthMarks || null,
+      twelfthMarks: twelfthMarks || null,
+      cgpa: cgpa || null,
+      additionalCertificates: additionalCertificates || "",
+    });
+  } catch (error) {
+    console.error("Error saving user data:", error);
+    throw error; // Rethrow the error to be handled by the calling function
+  }
+}
+
+export { app, auth, db, saveUserData };

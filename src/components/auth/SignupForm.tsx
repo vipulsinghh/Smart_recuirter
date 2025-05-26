@@ -35,6 +35,11 @@ const formSchema = z.object({
   password: z.string().min(6, { message: "Password must be at least 6 characters." }),
   confirmPassword: z.string(),
   role: z.enum(['student', 'company', 'college'], { required_error: "Please select a role." }),
+  skills: z.string().optional(),
+  tenthMarks: z.preprocess((a) => parseFloat(z.string().parse(a)), z.number().min(0).max(100).optional()),
+  twelfthMarks: z.preprocess((a) => parseFloat(z.string().parse(a)), z.number().min(0).max(100).optional()),
+  cgpa: z.preprocess((a) => parseFloat(z.string().parse(a)), z.number().min(0).max(10).optional()),
+  additionalCertificates: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -52,6 +57,11 @@ export function SignupForm() {
       email: "",
       password: "",
       confirmPassword: "",
+      role: undefined,
+      skills: "",
+      tenthMarks: undefined,
+      twelfthMarks: undefined,
+      cgpa: undefined,
     },
   });
 
@@ -149,6 +159,62 @@ export function SignupForm() {
             </FormItem>
           )}
         />
+        {form.watch('role') === 'student' && (
+          <>
+            <FormField
+              control={form.control}
+              name="skills"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Skills</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., JavaScript, Python, Communication" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="tenthMarks"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>10th Marks (%)</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="e.g., 85.5" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="twelfthMarks"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>12th Marks (%)</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="e.g., 90.0" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="cgpa"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>CGPA (on a 10-point scale)</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="e.g., 8.75" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
+        )}
         <Button type="submit" className="w-full bg-gradient-to-r from-primary to-primary-end text-primary-foreground hover:opacity-90 transition-opacity" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Sign Up

@@ -1,10 +1,13 @@
+"use client";
 import { PageHeader } from "@/components/common/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Briefcase, FileText, Bell } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-
+import CareerPredictionModal from '@/components/CareerPredictionModal';
+import { doc, getDoc, getFirestore } from "firebase/firestore";
+import { useState, useEffect } from "react";
 export default function StudentDashboardPage() {
   // Mock data
   const upcomingDrives = [
@@ -19,9 +22,70 @@ export default function StudentDashboardPage() {
     offered: 0,
   };
 
+  const [studentData, setStudentData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  // Remove the separate state for career predictions on the dashboard,
+  // as prediction will happen within the modal now.
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchStudentData = async () => {
+      try {
+        const auth = getAuth();
+        const user = auth.currentUser;
+        if (user) {
+          const db = getFirestore();
+          const docRef = doc(db, "users", user.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            console.log("Student Data:", docSnap.data()); // Log the data
+            setStudentData(docSnap.data());
+          } else {
+            setError("Student data not found.");
+          }
+        }
+      } catch (err) {
+        setError("Failed to fetch student data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudentData();
+  }, []);
+
+  // Placeholder AI prediction function based on skills
+  const predictCareerPath = (data: any | null): string[] => {
+    const skills = data?.skills?.toLowerCase() || "";
+    const predictions: string[] = [];
+
+    if (skills.includes("web development")) {
+      predictions.push("Frontend Developer");
+      predictions.push("Backend Developer");
+      predictions.push("Full-stack Developer");
+    }
+    if (skills.includes("data analysis")) {
+      predictions.push("Data Analyst");
+      predictions.push("Business Intelligence Analyst");
+    }
+    if (skills.includes("machine learning")) {
+      predictions.push("Machine Learning Engineer");
+      predictions.push("AI Engineer");
+    }
+    if (predictions.length === 0) {
+      predictions.push("Based on your skills, exploring roles in general IT or a related technical field is recommended.");
+    }
+    return predictions;
+  };
+
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+
+
   return (
     <>
-      <PageHeader title="Student Dashboard" description="Overview of your placement activities." />
+      <PageHeader title="Student Dashboard" description="Overview of your placement activities."/>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="lg:col-span-2 shadow-sm hover:shadow-md transition-shadow">
@@ -86,6 +150,17 @@ export default function StudentDashboardPage() {
         </Card>
       </div>
 
+      <Card className="mt-6 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={openModal}>
+        <CardHeader>
+          <CardTitle className="text-lg font-medium">AI Career Path Prediction</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center">
+           <p className="text-muted-foreground text-center">Click here to get your personalized career path prediction.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Card className="mt-6 shadow-sm hover:shadow-md transition-shadow">
         <CardHeader>
           <CardTitle className="text-lg font-medium flex items-center">
@@ -100,6 +175,7 @@ export default function StudentDashboardPage() {
           </div>
         </CardContent>
       </Card>
+ {isModalOpen && studentData && <CareerPredictionModal isOpen={isModalOpen} onClose={closeModal} studentData={studentData} />}
     </>
   );
 }
