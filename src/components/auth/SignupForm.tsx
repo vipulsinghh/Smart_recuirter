@@ -59,17 +59,17 @@ export function SignupForm() {
     setIsSubmitting(true);
     try {
       await signup(values.name, values.email, values.role as UserRole, values.password);
-      
       toast({
         title: "Signup Attempted",
-        description: `Creating account for ${values.name} as a ${values.role}...`, // This toast might be too early
+        description: `Creating account for ${values.name} as a ${values.role}...`,
       });
-      // Redirect is handled by AuthContext/onAuthStateChanged
+      // Successful signup will trigger onAuthStateChanged, which handles redirection via AuthContext's useEffect.
     } catch (error) {
-      // Error toast is handled in AuthContext's signup method
+      // Error toast is handled in AuthContext's signup method if it throws.
+    } finally {
+      // Ensure the spinner on the button stops.
       setIsSubmitting(false);
     }
-    // See comment in LoginForm regarding setIsSubmitting(false)
   }
 
   return (

@@ -54,20 +54,18 @@ export function LoginForm() {
       await login(values.email, values.role as UserRole, values.password);
       toast({
         title: "Login Attempted",
-        description: `Checking credentials for ${values.role}...`, // This toast might be too early, as redirection is handled by AuthContext
+        description: `Checking credentials for ${values.role}...`,
       });
-      // Redirect is handled by AuthContext/onAuthStateChanged
+      // Successful login will trigger onAuthStateChanged, which handles redirection via AuthContext's useEffect.
     } catch (error) {
-      // Error toast is handled in AuthContext's login method, but we stop form loading here
+      // Error toast is handled in AuthContext's login method if it throws.
+      // If login itself doesn't throw but onAuthStateChanged leads to an issue,
+      // the spinner stopping is handled by finally.
+    } finally {
+      // Ensure the spinner on the button stops regardless of outcome,
+      // especially if redirection doesn't unmount the form immediately.
       setIsSubmitting(false);
     }
-    // setIsSubmitting(false) will effectively be handled when navigation occurs or if an error is caught.
-    // If login is successful, onAuthStateChanged in AuthContext handles redirection.
-    // If login fails, the catch block above sets isSubmitting(false).
-    // However, if login is successful and user stays on the page (no redirect, unlikely), isSubmitting should be false.
-    // For now, let's assume redirection or error will make this state less relevant.
-    // For robustness, if login doesn't throw but doesn't immediately redirect:
-    // setIsSubmitting(false); // Could be added here if login is successful but no immediate redirect and form stays.
   }
 
   return (
