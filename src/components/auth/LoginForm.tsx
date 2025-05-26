@@ -51,19 +51,23 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      // The second parameter to login is a dummy because the function signature was changed to accept the actual password as the last argument.
-      // This is a temporary measure. The parameter named `password_DO_NOT_USE` should be removed in the AuthContext.
-      await login(values.email, "dummy_password_value", values.role as UserRole, values.password);
+      await login(values.email, values.role as UserRole, values.password);
       toast({
         title: "Login Attempted",
-        description: `Checking credentials for ${values.role}...`,
+        description: `Checking credentials for ${values.role}...`, // This toast might be too early, as redirection is handled by AuthContext
       });
       // Redirect is handled by AuthContext/onAuthStateChanged
     } catch (error) {
-      // Error toast is handled in AuthContext, but we stop loading here
+      // Error toast is handled in AuthContext's login method, but we stop form loading here
       setIsSubmitting(false);
     }
-    // setIsSubmitting(false) will be handled by onAuthStateChanged in AuthContext or error catch
+    // setIsSubmitting(false) will effectively be handled when navigation occurs or if an error is caught.
+    // If login is successful, onAuthStateChanged in AuthContext handles redirection.
+    // If login fails, the catch block above sets isSubmitting(false).
+    // However, if login is successful and user stays on the page (no redirect, unlikely), isSubmitting should be false.
+    // For now, let's assume redirection or error will make this state less relevant.
+    // For robustness, if login doesn't throw but doesn't immediately redirect:
+    // setIsSubmitting(false); // Could be added here if login is successful but no immediate redirect and form stays.
   }
 
   return (

@@ -19,9 +19,9 @@ import { useToast } from '@/hooks/use-toast';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password_DO_NOT_USE: string, role: UserRole, actualPassword_USE_INSTEAD: string) => Promise<void>;
+  login: (email: string, role: UserRole, password_USE_INSTEAD: string) => Promise<void>;
   logout: () => void;
-  signup: (name: string, email: string, password_DO_NOT_USE: string, role: UserRole, actualPassword_USE_INSTEAD: string) => Promise<void>;
+  signup: (name: string, email: string, role: UserRole, password_USE_INSTEAD: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -45,44 +45,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] 
           };
           setUser(appUser);
-          // Redirect based on role after user state is set
-          if (appUser.role === 'student') router.push('/student/dashboard');
-          else if (appUser.role === 'company') router.push('/company/dashboard');
-          else if (appUser.role === 'college') router.push('/college/dashboard');
+          setLoading(false); // User identified and set, loading done.
+
+          const currentPath = window.location.pathname;
+          const isOnAuthPage = currentPath === '/login' || currentPath === '/signup' || currentPath === '/';
+
+          if (isOnAuthPage) { // Only redirect if on login/signup/landing page
+            if (appUser.role === 'student') router.push('/student/dashboard');
+            else if (appUser.role === 'company') router.push('/company/dashboard');
+            else if (appUser.role === 'college') router.push('/college/dashboard');
+          }
         } else {
-          // This case might happen if localStorage is cleared but user is still logged in Firebase
-          // Or if signup process was interrupted. For now, log out.
-          console.warn("User role not found in storage. Logging out.");
+          // Role missing for an authenticated Firebase user. This is an error state.
+          // Sign them out. onAuthStateChanged will call this function again with firebaseUser = null.
+          console.warn(`Role for Firebase user ${firebaseUser.uid} not found in localStorage. Signing out.`);
           await signOut(auth);
-          setUser(null);
-          localStorage.removeItem(`placeon-user-role-${firebaseUser.uid}`); // Clean up just in case
-          router.push('/login?reason=role_missing');
+          // setLoading and setUser will be handled by the subsequent call to handleAuthChange
         }
       } catch (error) {
         console.error("Error processing auth change:", error);
         setUser(null); // Ensure user is null on error
-        router.push('/login?reason=auth_error');
+        setLoading(false); // Set loading to false on error
+        // Redirect to login if an error occurs during auth processing, unless already there
+        if (window.location.pathname !== '/login') {
+          router.push('/login?reason=auth_processing_error');
+        }
       }
     } else {
+      // User is null (logged out or initial state before Firebase auth check)
       setUser(null);
-      // No automatic redirect to login on logout, let components handle it or explicit logout call.
+      setLoading(false); // No user, loading done.
     }
-    setLoading(false);
-  }, [router]);
+  }, [router, auth]); // Added auth to dependency array
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, handleAuthChange);
     return () => unsubscribe();
   }, [handleAuthChange]);
 
-  const login = async (email: string, password_DO_NOT_USE_param_name_is_wrong_and_value_is_ignored: string, role: UserRole, actualPassword_USE_INSTEAD: string) => {
-    setLoading(true);
+  const login = async (email: string, role: UserRole, password: string) => {
+    // The form's own isSubmitting state handles button loading.
+    // AuthContext's loading state is managed by onAuthStateChanged.
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, actualPassword_USE_INSTEAD);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       // Store role in localStorage, onAuthStateChanged will pick it up
       localStorage.setItem(`placeon-user-role-${userCredential.user.uid}`, role);
-      // onAuthStateChanged will handle setting user and redirecting
-      // No need to call setLoading(false) here, onAuthStateChanged will do it.
+      // onAuthStateChanged will handle setting user, context loading, and redirecting.
     } catch (error: any) {
       console.error("Login failed:", error);
       toast({
@@ -90,20 +98,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: error.message || "Invalid email or password.",
         variant: "destructive",
       });
-      setLoading(false);
+      // If login fails, onAuthStateChanged won't fire with a new user.
+      // The context's loading state (if it were set true here) would need reset.
+      // However, we rely on onAuthStateChanged, so if it was initially true, it should become false.
+      // If an error occurs, the current `loading` state might persist if not handled by onAuthStateChange,
+      // but `handleAuthChange` (if it runs with user=null) should set loading to false.
+      // To be safe, ensure loading is false if this specific async op fails.
+      setLoading(false); 
       throw error; // Re-throw to be caught by LoginForm
     }
   };
 
-  const signup = async (name: string, email: string, password_DO_NOT_USE_param_name_is_wrong_and_value_is_ignored: string, role: UserRole, actualPassword_USE_INSTEAD: string) => {
-    setLoading(true);
+  const signup = async (name: string, email: string, role: UserRole, password: string) => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, actualPassword_USE_INSTEAD);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: name });
       // Store role in localStorage, onAuthStateChanged will pick it up
       localStorage.setItem(`placeon-user-role-${userCredential.user.uid}`, role);
-      // onAuthStateChanged will handle setting user and redirecting
-      // No need to call setLoading(false) here, onAuthStateChanged will do it.
+      // onAuthStateChanged will handle setting user, context loading, and redirecting.
     } catch (error: any) {
       console.error("Signup failed:", error);
       toast({
@@ -117,14 +129,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    setLoading(true);
+    setLoading(true); // Indicate a change is happening
     const currentFirebaseUser = auth.currentUser;
     if (currentFirebaseUser) {
       localStorage.removeItem(`placeon-user-role-${currentFirebaseUser.uid}`);
     }
     await signOut(auth);
     // onAuthStateChanged will set user to null and setLoading(false)
-    router.push('/login');
+    // It will also ensure layouts redirect if necessary.
+    // Explicit redirect to login page after logout.
+    router.push('/login'); 
   };
 
   return (

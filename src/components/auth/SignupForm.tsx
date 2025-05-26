@@ -58,20 +58,18 @@ export function SignupForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
-      // The third parameter to signup is a dummy because the function signature was changed to accept the actual password as the last argument.
-      // This is a temporary measure. The parameter named `password_DO_NOT_USE` should be removed in the AuthContext.
-      await signup(values.name, values.email, "dummy_password_value", values.role as UserRole, values.password);
+      await signup(values.name, values.email, values.role as UserRole, values.password);
       
       toast({
         title: "Signup Attempted",
-        description: `Creating account for ${values.name} as a ${values.role}...`,
+        description: `Creating account for ${values.name} as a ${values.role}...`, // This toast might be too early
       });
       // Redirect is handled by AuthContext/onAuthStateChanged
     } catch (error) {
-      // Error toast is handled in AuthContext, but we stop loading here
+      // Error toast is handled in AuthContext's signup method
       setIsSubmitting(false);
     }
-    // setIsSubmitting(false) will be handled by onAuthStateChanged in AuthContext or error catch
+    // See comment in LoginForm regarding setIsSubmitting(false)
   }
 
   return (
